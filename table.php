@@ -22,7 +22,6 @@ Atkreipkite dėmesį, kad po formos išsiuntimo, paskutinio įvesto amžiaus rei
 5. BONUS: Pridėti mygtuką “Ištrinti” prie kiekvieno studento. -->
 <body>
     <?php
-
         $person1 = array(
             "vardas" => "Tadas",
             "amžius" => "23",
@@ -84,7 +83,16 @@ Atkreipkite dėmesį, kad po formos išsiuntimo, paskutinio įvesto amžiaus rei
                     <label class="form-label">Profesija</label>
                     <input class="form-control" name="profesija"/>
                 </div>
-                <button class="btn btn-primary" type="submit" name="patvirtinti">Įrašyti</button>
+                <div>
+                    <button class="btn btn-primary me-3 w-100 mb-3" type="submit" name="patvirtinti">Įrašyti</button>
+                    <div>
+                        <form method="POST" action="table.php">
+                            <label class="form-label">Amžius nuo:</label>
+                            <input class="form-control mb-3 w-25" name="age"/>
+                            <button class="btn btn-primary" type="submit" name="update">Atnaujinti</button>
+                        </form>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -96,47 +104,84 @@ Atkreipkite dėmesį, kad po formos išsiuntimo, paskutinio įvesto amžiaus rei
                     <th>Vardas</th>
                     <th>Amžius</th>
                     <th>Profesija</th>
+                    <th></th>
                 </tr>
             </thead>
-            <tbody>  
-            <?php 
-            $list = json_decode($_COOKIE["list"], true);
-            foreach($list as $people) {
-                $key = array_search($people, $list);
-                $key++;
-                    echo "<td>".$key."</td>";
-                    echo "<td>".$people["vardas"]."</td>";
-                    echo "<td>".$people["amžius"]."</td>";
-                    echo "<td>".$people["profesija"]."</td>";
-                echo "</tr>";
-            }
-
-            if(isset($_POST['patvirtinti'])) {
-                if($_POST['vardas']!="" && $_POST['amzius']!="" && $_POST['profesija']!="") {
-                    if($_POST['amzius'] > 140 || $_POST['amzius'] < 0 || !is_numeric($_POST['amzius'])) {
-                        echo "<div class='alert alert-warning' role='alert'>Įveskite tinkamą amžių!</div>";
-                    } else {
-                        $vardas = $_POST['vardas'];
-                        $amzius = $_POST['amzius'];
-                        $profesija = $_POST['profesija'];
-                        $newperson = array(
-                            "vardas" => $vardas,
-                            "amžius" => $amzius,
-                            "profesija" => $profesija
-                        );
-                        $newlist = $_COOKIE['list'];
-                        $newlistdecoded = json_decode($newlist, true);
-                        $newlistdecoded [] = $newperson;
-                        $newlist = json_encode($newlistdecoded, true);
-                        setcookie("list", $newlist, time() + (86400*30), "table.php");
-                        header("Location: table.php"); 
+            <tbody> 
+                <?php
+                    if(isset($_POST['patvirtinti'])) {
+                        if($_POST['vardas']!="" && $_POST['amzius']!="" && $_POST['profesija']!="") {
+                            if($_POST['amzius'] > 140 || $_POST['amzius'] < 0 || !is_numeric($_POST['amzius'])) {
+                                echo "<div class='alert alert-warning' role='alert'>Įveskite tinkamą amžių!</div>";
+                            } else {
+                                $vardas = $_POST['vardas'];
+                                $amzius = $_POST['amzius'];
+                                $profesija = $_POST['profesija'];
+                                $newperson = array(
+                                    "vardas" => $vardas,
+                                    "amžius" => $amzius,
+                                    "profesija" => $profesija
+                                );
+                                $newlist = $_COOKIE['list'];
+                                $newlistdecoded = json_decode($newlist, true);
+                                $newlistdecoded [] = $newperson;
+                                $newlist = json_encode($newlistdecoded, true);
+                                setcookie("list", $newlist, time() + (86400*30), "table.php");
+                                header("Location: table.php"); 
+                            }
+                        } else {
+                            echo "<div class='alert alert-warning' role='alert'>Užpildykite visus laukelius!</div>";
+                        }
                     }
-                } else {
-                    echo "<div class='alert alert-warning' role='alert'>Užpildykite visus laukelius!</div>";
-                }
-            }
-            // https://www.phptutorial.net/php-tutorial/php-checkbox/
-            ?>
+                ?>
+                <?php 
+                    if(isset($_COOKIE["list"])) {
+                        $list = json_decode($_COOKIE["list"], true);
+                    }
+
+                    if(isset($_GET["id"])) {
+                        unset($list[$_GET["id"]-1]);
+                        setcookie("list", json_encode($list, true), time() + 86400, "table.php");
+                        header("Location: table.php");
+                    }
+                ?>
+                <?php
+                    if(isset($_POST['update'])){
+                        foreach($list as $people) {
+                            if($people["amžius"]>=$_POST['age']) {
+                                $number = array_search($people, $list);
+                                $key1 = array_search($people, $list);
+                                unset($list[$key1]);               
+                                $number++;
+                                echo "<td>".$number."</td>";
+                                echo "<td>".$people["vardas"]."</td>";
+                                echo "<td>".$people["amžius"]."</td>";
+                                echo "<td>".$people["profesija"]."</td>";
+                    
+                ?>
+                <?php echo "<td>"; ?>
+                <form method="GET" action="table.php">
+                    <input name="id" type="hidden" value="<?php echo $number ?>">
+                    <button type="submit" class='btn btn-danger'> Ištrinti </button>
+                </form> 
+                <?php echo "</td>"; echo "</tr>"; ?>
+                <?php }}} else { ?>
+                <?php  
+                    foreach($list as $people) {
+                        $number = array_search($people, $list);
+                        $number++;
+                        echo "<td>".$number."</td>";
+                        echo "<td>".$people["vardas"]."</td>";
+                        echo "<td>".$people["amžius"]."</td>";
+                        echo "<td>".$people["profesija"]."</td>";
+                ?>
+                <?php echo "<td>"; ?>
+                <form method="GET" action="table.php">
+                    <input name="id" type="hidden" value="<?php echo $number ?>">
+                    <button type="submit" class='btn btn-danger'> Ištrinti </button>
+                </form> 
+                <?php echo "</td>"; echo "</tr>"; ?>
+                <?php }} ?>
             </tbody>
         </table>
     </div>
